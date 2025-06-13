@@ -11,7 +11,7 @@ export default function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false,
+        headerShown: true,
         tabBarIcon: ({ color, size }) => {
           let iconName: string;
           if (route.name === "Search") iconName = "search";

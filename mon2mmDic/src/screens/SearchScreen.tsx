@@ -5,14 +5,13 @@ import DictionaryItem from "../components/DictionaryItem";
 import { useNavigation } from "@react-navigation/native";
 
 interface DicEntry {
-  id: number;
   word: string;
   pos: string;
   definition: string;
   example: string;
 }
 
-const SearchScreen = () => {
+const SearchScreen: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [results, setResults] = useState<DicEntry[]>([]);
   const [error, setError] = useState("");
@@ -25,25 +24,31 @@ const SearchScreen = () => {
       setError("กรุณากรอกคำที่ต้องการค้นหา");
       return;
     }
-    const db = await openDatabase();
-    
-    db.execAsync(
-        `SELECT * FROM WordDefinition WHERE word LIKE ? OR definition LIKE ? LIMIT 100`,
-        [`%${searchText}%`, `%${searchText}%`]
-        )
-        .then((rows) => {
-            if (rows.length > 0) {
-            setResults(rows[0].rows._array as DicEntry[]);
+    try {
+      const db = await openDatabase();
+      db.transaction((tx: any) => {
+        tx.executeSql(
+          `SELECT * FROM WordDefinition WHERE word LIKE ? OR definition LIKE ? LIMIT 100`,
+          [`%${searchText}%`, `%${searchText}%`],
+          (_: any, result: any) => {
+            if (result.rows.length > 0) {
+              setResults(result.rows._array as DicEntry[]);
+              setError("");
             } else {
-            setResults([]);
-            setError("ไม่พบคำที่ค้นหา");
+              setResults([]);
+              setError("ไม่พบคำที่ค้นหา");
             }
-        })
-        .catch((err) => {
-            console.error(err);
+          },
+          (_: any, error: any) => {
+            console.error(error);
             setError("เกิดข้อผิดพลาดในการค้นหา");
-        }
-    )
+            return true;
+          }
+        );
+      });
+    } catch (err) {
+      setError("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล");
+    }
   };
 
   return (
@@ -61,7 +66,7 @@ const SearchScreen = () => {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlatList
         data={results}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.word.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => navigation.navigate("Result", { entry: item })}>
             <DictionaryItem entry={item} />

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 
 type DicEntry = {
-  id: number;
   word: string;
   pos: string;
   definition: string;
